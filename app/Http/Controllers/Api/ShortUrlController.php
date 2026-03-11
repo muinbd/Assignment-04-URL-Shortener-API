@@ -8,7 +8,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
-
 class ShortUrlController extends Controller
 {
     public function index(Request $request): JsonResponse
@@ -24,7 +23,7 @@ class ShortUrlController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'original_url' => ['required', 'url'],
+            'original_url' => ['required', 'url:http,https', 'max:2048'],
             'expires_at' => ['nullable', 'date', 'after:now'],
         ]);
 
@@ -54,9 +53,15 @@ class ShortUrlController extends Controller
         $this->authorize('update', $url);
 
         $validated = $request->validate([
-            'original_url' => ['sometimes', 'required', 'url'],
+            'original_url' => ['sometimes', 'required', 'url:http,https', 'max:2048'],
             'expires_at' => ['sometimes', 'nullable', 'date', 'after:now'],
         ]);
+
+        if ($validated === []) {
+            return response()->json([
+                'message' => 'At least one field (original_url or expires_at) is required.',
+            ], 422);
+        }
 
         $url->update($validated);
 
@@ -72,7 +77,7 @@ class ShortUrlController extends Controller
 
         $url->delete();
 
-        return response()->noContent(); // 204
+        return response()->noContent();
     }
 
     private function generateUniqueShortCode(int $length = 6): string

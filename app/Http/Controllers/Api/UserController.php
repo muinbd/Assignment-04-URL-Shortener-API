@@ -29,6 +29,12 @@ class UserController extends Controller
             ],
         ]);
 
+        if ($validated === []) {
+            return response()->json([
+                'message' => 'At least one field (name or email) is required.',
+            ], 422);
+        }
+
         $user->update($validated);
 
         return response()->json([
@@ -41,12 +47,9 @@ class UserController extends Controller
     {
         $user = $request->user();
 
-        // delete current token first (optional but clean)
         $user->currentAccessToken()?->delete();
-
-        // short_urls will be deleted automatically if FK cascadeOnDelete is set
         $user->delete();
 
-        return response()->noContent(); // 204
+        return response()->noContent();
     }
 }
